@@ -52,25 +52,28 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface INews extends Document {
   title: {
-    en: string;
-    de: string;
-    es: string;
-    fr: string;
-    it: string;
-    ru: string;
-    ar: string;
-    tr: string;
+    en?: string;
+    de?: string;
+    es?: string;
+    fr?: string;
+    it?: string;
+    ru?: string;
+    ar?: string;
+    tr?: string;
   };
   content: {
-    en: string;
-    de: string;
-    es: string;
-    fr: string;
-    it: string;
-    ru: string;
-    ar: string;
-    tr: string;
+    en?: string;
+    de?: string;
+    es?: string;
+    fr?: string;
+    it?: string;
+    ru?: string;
+    ar?: string;
+    tr?: string;
   };
+  originalLang: string;
+  coverImage?: string;
+  views: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,25 +81,28 @@ export interface INews extends Document {
 const NewsSchema: Schema = new Schema(
   {
     title: {
-      en: { type: String, required: true },
-      de: { type: String, required: true },
-      es: { type: String, required: true },
-      fr: { type: String, required: true },
-      it: { type: String, required: true },
-      ru: { type: String, required: true },
-      ar: { type: String, required: true },
-      tr: { type: String, required: true },
+      en: { type: String },
+      de: { type: String },
+      es: { type: String },
+      fr: { type: String },
+      it: { type: String },
+      ru: { type: String },
+      ar: { type: String },
+      tr: { type: String },
     },
     content: {
-      en: { type: String, required: true },
-      de: { type: String, required: true },
-      es: { type: String, required: true },
-      fr: { type: String, required: true },
-      it: { type: String, required: true },
-      ru: { type: String, required: true },
-      ar: { type: String, required: true },
-      tr: { type: String, required: true },
+      en: { type: String },
+      de: { type: String },
+      es: { type: String },
+      fr: { type: String },
+      it: { type: String },
+      ru: { type: String },
+      ar: { type: String },
+      tr: { type: String },
     },
+    originalLang: { type: String, required: true },
+    coverImage: { type: String },
+    views: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

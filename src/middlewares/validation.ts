@@ -1,22 +1,28 @@
 import { body } from 'express-validator';
 
+// Only require the original language for title and content
 export const validateNews = [
-  body('title.en').isString().notEmpty(),
-  body('title.de').isString().notEmpty(),
-  body('title.es').isString().notEmpty(),
-  body('title.fr').isString().notEmpty(),
-  body('title.it').isString().notEmpty(),
-  body('title.ru').isString().notEmpty(),
-  body('title.ar').isString().notEmpty(),
-  body('title.tr').isString().notEmpty(),
-  body('content.en').isString().notEmpty(),
-  body('content.de').isString().notEmpty(),
-  body('content.es').isString().notEmpty(),
-  body('content.fr').isString().notEmpty(),
-  body('content.it').isString().notEmpty(),
-  body('content.ru').isString().notEmpty(),
-  body('content.ar').isString().notEmpty(),
-  body('content.tr').isString().notEmpty(),
+  body('title').custom((value, { req }) => {
+    const lang = req.body.originalLang;
+    if (!lang || !value || !value[lang]) {
+      throw new Error('Title in original language is required');
+    }
+    return true;
+  }),
+  body('content').custom((value, { req }) => {
+    const lang = req.body.originalLang;
+    if (!lang || !value || !value[lang]) {
+      throw new Error('Content in original language is required');
+    }
+    return true;
+  }),
+  body('originalLang').isString().notEmpty().isIn(['en','de','es','fr','it','ru','ar','tr'])
+];
+
+// For translation update endpoint
+export const validateNewsTranslation = [
+  body('title').optional().isString(),
+  body('content').optional().isString()
 ];
 
 export const validateLogin = [

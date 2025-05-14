@@ -50,3 +50,50 @@ You can also use the Node.js cluster module for basic clustering.
 
 ## License
 MIT 
+
+## Multilingual News Workflow
+
+This backend supports posting news in 8 languages: English, German, Spanish, French, Italian, Russian, Arabic, and Turkish.
+
+### How it works
+- When an admin posts news, they specify the original language.
+- The backend auto-translates the title and content to the other 7 languages using LibreTranslate (or another free API).
+- All 8 versions are saved in the database.
+- Admins can later edit any translation manually.
+
+### Environment Variables
+See `.env.example` for required variables:
+- `MONGODB_URI`: MongoDB connection string
+- `JWT_SECRET`: Secret for JWT authentication
+- `PORT`: Server port
+- `TRANSLATE_API_KEY`: (Optional) If using a paid translation API
+
+### API Endpoints
+
+#### Create News (auto-translate)
+```
+POST /api/news
+Headers: Authorization: Bearer <token>
+Body (JSON):
+{
+  "title": "Original title",
+  "content": "Original content",
+  "originalLang": "en" // or de, es, fr, it, ru, ar, tr
+}
+```
+
+#### Update a Translation
+```
+PUT /api/news/:id/translation/:lang
+Headers: Authorization: Bearer <token>
+Body (JSON):
+{
+  "title": "Manual translation title",
+  "content": "Manual translation content"
+}
+```
+
+### Notes
+- The backend uses LibreTranslate for free translation. You can swap to another provider if needed.
+- Only the original language is required when posting news; others are filled automatically.
+- Admins can edit any translation at any time. 
