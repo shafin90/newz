@@ -11,7 +11,7 @@ const LIBRETRANSLATE_URL = 'http://localhost:5000/translate';
 export const getAllNews = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = 5; // Set fixed limit to 5 items per page
     const skip = (page - 1) * limit;
     const total = await News.countDocuments();
     const totalPages = Math.ceil(total / limit);
@@ -24,23 +24,34 @@ export const getAllNews = async (req: Request, res: Response) => {
 
 export const createNews = async (req: Request, res: Response) => {
   try {
+    console.log('Request body:', req.body);
     console.log('File received:', req.file);
     let { title, content, originalLang } = req.body;
     
     // Parse title/content if sent as JSON strings (from FormData)
-    if (typeof title === 'string') title = JSON.parse(title);
-    if (typeof content === 'string') content = JSON.parse(content);
+    if (typeof title === 'string') {
+      console.log('Parsing title:', title);
+      title = JSON.parse(title);
+    }
+    if (typeof content === 'string') {
+      console.log('Parsing content:', content);
+      content = JSON.parse(content);
+    }
+
+    console.log('Parsed data:', { title, content, originalLang });
 
     if (!title || !content || !originalLang) {
       return res.status(400).json({ message: 'Title, content, and originalLang are required' });
     }
 
     const newsData = {
-      title: { [originalLang]: title[originalLang] },
-      content: { [originalLang]: content[originalLang] },
+      title,
+      content,
       originalLang,
       coverImage: req.file ? `/uploads/${req.file.filename}` : undefined
     };
+
+    console.log('Creating news with data:', newsData);
 
     const news = new News(newsData);
     await news.save();
