@@ -89,7 +89,7 @@ router.post('/', auth, upload.single('coverImage'), parseJsonFields, validateNew
  *       422:
  *         description: Validation error
  */
-router.put('/:id', auth, upload.single('coverImage'), validateNews, handleValidation, updateNews);
+router.put('/:id', auth, upload.single('coverImage'), parseJsonFields, validateNews, handleValidation, updateNews);
 
 /**
  * @swagger

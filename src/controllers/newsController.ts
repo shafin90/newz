@@ -76,21 +76,39 @@ export const updateNews = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { title, content, originalLang } = req.body;
     
+    console.log('Update request body:', { title, content, originalLang });
+    
     // Get existing news item
     const existingNews = await News.findById(id);
     if (!existingNews) {
       return res.status(404).json({ message: 'News not found' });
     }
 
+    // Validate original language content
+    if (!title?.[originalLang]?.trim() || !content?.[originalLang]?.trim()) {
+      return res.status(400).json({
+        errors: [
+          {
+            type: 'field',
+            msg: 'Title and content in original language are required',
+            path: originalLang ? 'content' : 'originalLang'
+          }
+        ]
+      });
+    }
+
     // Prepare update data
-    const updateData: any = {};
+    const updateData: any = {
+      originalLang: originalLang || existingNews.originalLang
+    };
     
     // Handle title updates - only update provided languages
     if (title) {
       const newTitle = { ...existingNews.title };
       Object.keys(title).forEach(lang => {
-        if (title[lang] && LANGS.includes(lang)) {
-          newTitle[lang as keyof typeof newTitle] = title[lang];
+        const trimmedTitle = title[lang]?.trim();
+        if (trimmedTitle && LANGS.includes(lang)) {
+          newTitle[lang] = trimmedTitle;
         }
       });
       updateData.title = newTitle;
@@ -100,8 +118,9 @@ export const updateNews = async (req: Request, res: Response) => {
     if (content) {
       const newContent = { ...existingNews.content };
       Object.keys(content).forEach(lang => {
-        if (content[lang] && LANGS.includes(lang)) {
-          newContent[lang as keyof typeof newContent] = content[lang];
+        const trimmedContent = content[lang]?.trim();
+        if (trimmedContent && LANGS.includes(lang)) {
+          newContent[lang] = trimmedContent;
         }
       });
       updateData.content = newContent;
@@ -112,8 +131,7 @@ export const updateNews = async (req: Request, res: Response) => {
       updateData.coverImage = `/uploads/${req.file.filename}`;
     }
 
-    // Ensure originalLang is preserved
-    updateData.originalLang = existingNews.originalLang;
+    console.log('Update data:', updateData);
 
     // Update the news item
     const news = await News.findByIdAndUpdate(
@@ -122,6 +140,7 @@ export const updateNews = async (req: Request, res: Response) => {
       { new: true, runValidators: true }
     );
 
+    console.log('Updated news:', news);
     res.json(news);
   } catch (err) {
     console.error('Update error:', err);
