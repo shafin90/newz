@@ -7,38 +7,35 @@ import newsRoutes from './routes/news';
 import errorHandler from './middlewares/errorHandler';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger';
-import i18next from 'i18next';
-import Backend from 'i18next-fs-backend';
-import i18nextMiddleware from 'i18next-http-middleware';
 import cors from 'cors';
+import path from 'path';
 
 dotenv.config();
 
 const app = express();
 
-app.use(helmet());
+// Security middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" } // Allow images to be served cross-origin
+}));
+
+// Body parser
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// CORS
 app.use(cors());
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
-i18next
-  .use(Backend)
-  .use(i18nextMiddleware.LanguageDetector)
-  .init({
-    fallbackLng: 'en',
-    preload: ['en', 'de', 'es', 'fr', 'it', 'ru', 'ar', 'tr'],
-    backend: {
-      loadPath: __dirname + '/../locales/{{lng}}/translation.json',
-    },
-    detection: {
-      order: ['header', 'querystring', 'cookie'],
-      caches: ['cookie'],
-    },
-    debug: false,
-  });
+// Rate limiting
+app.use(rateLimit({ 
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+}));
 
-app.use(i18nextMiddleware.handle(i18next));
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
