@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import News from '../models/News';
 import { startOfDay, endOfDay, subDays } from 'date-fns';
+import fs from 'fs';
+import path from 'path';
 
 const LANGS = ['en', 'de', 'es', 'fr', 'it', 'ru', 'ar', 'tr'];
 
@@ -52,9 +54,11 @@ export const createNews = async (req: Request, res: Response) => {
 export const updateNews = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, content, originalLang } = req.body;
+    let { title, content, originalLang } = req.body;
     
-    console.log('Update request body:', { title, content, originalLang });
+    // Parse title/content if sent as JSON strings (from FormData)
+    if (typeof title === 'string') title = JSON.parse(title);
+    if (typeof content === 'string') content = JSON.parse(content);
     
     // Get existing news item
     const existingNews = await News.findById(id);
@@ -65,14 +69,25 @@ export const updateNews = async (req: Request, res: Response) => {
     // Prepare update data
     const updateData: any = {};
     
-    // Handle title updates
+    // Merge existing translations with updates for title
     if (title) {
-      updateData.title = { [originalLang]: title[originalLang] };
+      updateData.title = {
+        ...existingNews.title,
+        ...title
+      };
     }
     
-    // Handle content updates
+    // Merge existing translations with updates for content
     if (content) {
-      updateData.content = { [originalLang]: content[originalLang] };
+      updateData.content = {
+        ...existingNews.content,
+        ...content
+      };
+    }
+    
+    // Update original language if provided
+    if (originalLang) {
+      updateData.originalLang = originalLang;
     }
     
     // Handle cover image
@@ -97,11 +112,27 @@ export const updateNews = async (req: Request, res: Response) => {
 export const deleteNews = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const news = await News.findByIdAndDelete(id);
-    if (!news) return res.status(404).json({ message: 'News not found' });
-    res.json({ message: 'News deleted' });
+    const news = await News.findById(id);
+    
+    if (!news) {
+      return res.status(404).json({ message: 'News not found' });
+    }
+
+    // Delete the associated cover image if it exists
+    if (news.coverImage) {
+      const imagePath = path.join(__dirname, '../../', news.coverImage);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    // Delete the news document
+    await news.deleteOne();
+    
+    res.json({ message: 'News deleted successfully' });
   } catch (err) {
-    res.status(400).json({ message: 'Invalid data', error: err });
+    console.error('Delete error:', err);
+    res.status(500).json({ message: 'Failed to delete news', error: err });
   }
 };
 
